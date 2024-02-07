@@ -3,9 +3,14 @@ mod mirror;
 mod srv;
 mod types;
 
+use lazy_static::lazy_static;
 use rocket::{routes, Config};
 use sqlx::sqlite::SqlitePoolOptions;
 use std::net::Ipv4Addr;
+
+lazy_static! {
+    pub static ref PUBLIC_URL_PREFIX: String = dotenvy::var("PUBLIC_URL_PREFIX").unwrap();
+}
 
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
@@ -16,6 +21,9 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let db_url = dotenvy::var("DATABASE_URL")?;
+
+    // this causes lazy_static to initialize the variable, which will panic if the env var is not set
+    println!("public url prefix: {}", *PUBLIC_URL_PREFIX);
 
     let pool = SqlitePoolOptions::new()
         .max_connections(5)

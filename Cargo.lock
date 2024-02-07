@@ -1785,6 +1785,7 @@ dependencies = [
  "anyhow",
  "dotenvy",
  "futures",
+ "lazy_static",
  "reqwest",
  "rocket",
  "serde",

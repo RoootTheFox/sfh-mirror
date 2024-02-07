@@ -115,6 +115,12 @@ async fn insert_song_into_db(
     mut conn: PoolConnection<Sqlite>,
     song: crate::types::Song,
 ) -> Result<SqliteQueryResult, Error> {
+    let url = format!(
+        "{}/{}.mp3",
+        <String as AsRef<str>>::as_ref(&crate::PUBLIC_URL_PREFIX),
+        song.id
+    );
+
     sqlx::query!(
         "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id)
                     VALUES (?, ?, ?, ?, ?, ?)",
@@ -122,7 +128,7 @@ async fn insert_song_into_db(
         song.name,
         song.song_name,
         song.song_id,
-        song.download_url,
+        url,
         song.level_id,
     )
     .execute(&mut *conn)
