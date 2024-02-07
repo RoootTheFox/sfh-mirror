@@ -19,6 +19,9 @@ pub struct Song {
     #[serde(rename(deserialize = "downloadUrl"))]
     pub download_url: String,
     #[serde(default)]
-    #[serde(rename(deserialize = "levelID"), deserialize_with = "deserialize_option_number_from_string")]
+    #[serde(
+        rename(deserialize = "levelID"),
+        deserialize_with = "deserialize_option_number_from_string"
+    )]
     pub level_id: Option<String>,
 }
