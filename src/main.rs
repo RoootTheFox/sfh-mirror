@@ -32,7 +32,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
         if !initial_sync_finished {
             println!("performing initial sync");
             match mirror::initial_sync(&db.0).await {
-                Ok(_) => println!("initial sync completed"),
+                Ok(_) => {},
                 Err(_) => return Err(rocket),
             }
         }
