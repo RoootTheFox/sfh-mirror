@@ -47,10 +47,8 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
 
         let file_path = format!("songs/{}.mp3", song_id);
         if tokio::fs::try_exists(&file_path).await? {
-            println!("song already exists: {}", song_id);
             // we still insert the song into the db, in case it wasn't in there yet
             insert_song_into_db(conn, song).await?;
-            println!("inserted song into db anyways: {}", song_id);
             continue;
         }
 
@@ -82,10 +80,8 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
                 };
             }
 
-            println!("finished downloading song: {}", song_id);
-
             insert_song_into_db(conn, song).await?;
-            println!("inserted song into db: {}", song_id);
+            println!("added song: {}", song_id);
 
             Ok::<_, anyhow::Error>(())
         }));
@@ -94,7 +90,6 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // run 'em all!
     let results = futures::future::try_join_all(tasks).await?;
 
-    println!("checking for errors");
     for result in results {
         match result {
             Ok(_) => {}
@@ -107,6 +102,8 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     sqlx::query!("REPLACE INTO state (key, value) VALUES ('initial_sync_finished', 'true')")
         .execute(&mut *conn)
         .await?;
+
+    println!("initial sync completed!");
 
     Ok(())
 }
