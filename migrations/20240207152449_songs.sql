@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS songs (
     id TEXT PRIMARY KEY NOT NULL, /* id of the SFH song */
-    external_url VARCHAR, /* youtube */
     name VARCHAR,
     song_name VARCHAR NOT NULL,
     song_id INT UNSIGNED NOT NULL, /* in-game song id */

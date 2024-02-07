@@ -11,8 +11,6 @@ pub struct DBState {
 pub struct Song {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
-    #[serde(rename(deserialize = "songURL"))]
-    pub external_url: Option<String>,
     pub name: Option<String>,
     #[serde(rename(deserialize = "songName"))]
     pub song_name: String,

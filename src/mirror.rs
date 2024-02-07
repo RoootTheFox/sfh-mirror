@@ -34,10 +34,9 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     for song in response {
         println!("inserting song: {}", song.id);
         sqlx::query!(
-            "INSERT INTO songs (id, external_url, name, song_name, song_id, download_url, level_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO songs (id, name, song_name, song_id, download_url, level_id)
+                VALUES (?, ?, ?, ?, ?, ?)",
             song.id,
-            song.external_url,
             song.name,
             song.song_name,
             song.song_id,
