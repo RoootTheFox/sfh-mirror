@@ -4,46 +4,71 @@ mod srv;
 mod types;
 
 use lazy_static::lazy_static;
-use rocket::{routes, Config};
-use sqlx::sqlite::SqlitePoolOptions;
+use rocket::fairing::AdHoc;
+use rocket::{routes, Build, Config, Rocket};
+use rocket_db_pools::Database;
 use std::net::Ipv4Addr;
 
 lazy_static! {
     pub static ref PUBLIC_URL_PREFIX: String = dotenvy::var("PUBLIC_URL_PREFIX").unwrap();
 }
 
+#[derive(Database)]
+#[database("sqlx")]
+struct Db(sqlx::SqlitePool);
+
+async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
+    if let Some(db) = Db::fetch(&rocket) {
+        match sqlx::migrate!().run(&db.0).await {
+            Ok(_) => println!("migrations ran successfully"),
+            Err(_) => return Err(rocket),
+        }
+
+        let initial_sync_finished = match mirror::check_initial_sync(&db.0).await {
+            Ok(a) => a,
+            Err(_) => return Err(rocket),
+        };
+
+        if !initial_sync_finished {
+            println!("performing initial sync");
+            match mirror::initial_sync(&db.0).await {
+                Ok(_) => println!("initial sync completed"),
+                Err(_) => return Err(rocket),
+            }
+        }
+
+        Ok(rocket)
+    } else {
+        Err(rocket)
+    }
+}
+
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
-    let config = Config {
-        port: 58532,
-        address: Ipv4Addr::new(0, 0, 0, 0).into(),
-        ..Config::default()
-    };
-
     let db_url = dotenvy::var("DATABASE_URL")?;
+
+    let figment = Config::figment()
+        .merge(("port", 58532))
+        .merge(("address", Ipv4Addr::from([0, 0, 0, 0])))
+        .merge((
+            "databases.sqlx",
+            rocket_db_pools::Config {
+                url: db_url,
+                min_connections: None,
+                max_connections: 1024,
+                connect_timeout: 3,
+                idle_timeout: None,
+            },
+        ));
 
     // this causes lazy_static to initialize the variable, which will panic if the env var is not set
     println!("public url prefix: {}", *PUBLIC_URL_PREFIX);
 
-    let pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect(&db_url)
-        .await?;
-
-    sqlx::migrate!().run(&pool).await?;
-
-    // check if initial sync is finished
-    let initial_sync_finished = mirror::check_initial_sync(pool.clone()).await?;
-
-    if !initial_sync_finished {
-        println!("performing initial sync");
-        mirror::initial_sync(pool.clone()).await?;
-    }
-
     let _rocket = rocket::build()
-        .manage(pool)
+        .attach(Db::init())
+        .attach(AdHoc::try_on_ignite("DB Migrations", run_migrations))
         .mount("/", routes![srv::version, api::get_song])
-        .configure(config)
+        .configure(figment)
         .launch()
         .await?;
 

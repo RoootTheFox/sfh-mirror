@@ -5,7 +5,7 @@ use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{Error, Pool, Sqlite};
 
-pub(crate) async fn check_initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<bool> {
+pub(crate) async fn check_initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<bool> {
     let mut conn = pool.acquire().await?;
 
     let initial_sync_finished = sqlx::query_as!(
@@ -24,7 +24,7 @@ pub(crate) async fn check_initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<boo
     Ok(initial_sync_finished.value == "true")
 }
 
-pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
     let mut conn = pool.acquire().await?;
 
     let reqwest = reqwest::Client::new();
