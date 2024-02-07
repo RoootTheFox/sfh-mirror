@@ -42,13 +42,40 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
         let download_url = song.download_url.clone();
         let song_id = song.id.clone();
         let mut conn = pool.acquire().await?;
+
+        let file_path = format!("songs/{}.mp3", song_id);
+        if tokio::fs::try_exists(&file_path).await? {
+            println!("song already exists: {}", song_id);
+            continue;
+        }
+
         tasks.push(tokio::spawn(async move {
             println!("downloading song: {} ({})", song_id, download_url);
-            let mut file = tokio::fs::File::create(format!("songs/{}.mp3", song.id)).await?;
-            let mut response = reqwest::get(&download_url).await?.bytes_stream();
+            let mut file = tokio::fs::File::create(&file_path).await?;
+            let mut response = match reqwest::get(&download_url).await {
+                Ok(response) => {
+                    if !response.status().is_success() {
+                        tokio::fs::remove_file(file_path).await?;
+                        return Err(anyhow::anyhow!("failed to download song: {}", song_id));
+                    }
+                    response
+                }
+                Err(e) => {
+                    tokio::fs::remove_file(file_path).await?;
+                    return Err(e.into());
+                }
+            }.bytes_stream();
+
             while let Some(item) = response.next().await {
-                tokio::io::copy(&mut item?.as_ref(), &mut file).await?;
+                match tokio::io::copy(&mut item?.as_ref(), &mut file).await {
+                    Ok(_) => {},
+                    Err(e) => {
+                        tokio::fs::remove_file(file_path).await?;
+                        return Err(e.into());
+                    }
+                };
             }
+
             println!("finished downloading song: {}", song_id);
 
             sqlx::query!(
@@ -82,7 +109,7 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
         }
     }
 
-    sqlx::query!("INSERT INTO state (key, value) VALUES ('initial_sync_finished', 'true')")
+    sqlx::query!("REPLACE INTO state (key, value) VALUES ('initial_sync_finished', 'true')")
         .execute(&mut *conn)
         .await?;
 
