@@ -1,7 +1,9 @@
 use crate::types::DBState;
 use futures::StreamExt;
 use rocket::tokio;
-use sqlx::{Pool, Sqlite};
+use sqlx::pool::PoolConnection;
+use sqlx::sqlite::SqliteQueryResult;
+use sqlx::{Error, Pool, Sqlite};
 
 pub(crate) async fn check_initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<bool> {
     let mut conn = pool.acquire().await?;
@@ -41,11 +43,14 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     for song in response {
         let download_url = song.download_url.clone();
         let song_id = song.id.clone();
-        let mut conn = pool.acquire().await?;
+        let conn = pool.acquire().await?;
 
         let file_path = format!("songs/{}.mp3", song_id);
         if tokio::fs::try_exists(&file_path).await? {
             println!("song already exists: {}", song_id);
+            // we still insert the song into the db, in case it wasn't in there yet
+            insert_song_into_db(conn, song).await?;
+            println!("inserted song into db anyways: {}", song_id);
             continue;
         }
 
@@ -64,11 +69,12 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
                     tokio::fs::remove_file(file_path).await?;
                     return Err(e.into());
                 }
-            }.bytes_stream();
+            }
+            .bytes_stream();
 
             while let Some(item) = response.next().await {
                 match tokio::io::copy(&mut item?.as_ref(), &mut file).await {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => {
                         tokio::fs::remove_file(file_path).await?;
                         return Err(e.into());
@@ -78,18 +84,7 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
 
             println!("finished downloading song: {}", song_id);
 
-            sqlx::query!(
-                "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id)\
-                VALUES (?, ?, ?, ?, ?, ?)",
-                song.id,
-                song.name,
-                song.song_name,
-                song.song_id,
-                song.download_url,
-                song.level_id,
-            )
-            .execute(&mut *conn)
-            .await?;
+            insert_song_into_db(conn, song).await?;
             println!("inserted song into db: {}", song_id);
 
             Ok::<_, anyhow::Error>(())
@@ -114,4 +109,22 @@ pub(crate) async fn initial_sync(pool: Pool<Sqlite>) -> anyhow::Result<()> {
         .await?;
 
     Ok(())
+}
+
+async fn insert_song_into_db(
+    mut conn: PoolConnection<Sqlite>,
+    song: crate::types::Song,
+) -> Result<SqliteQueryResult, Error> {
+    sqlx::query!(
+        "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id)
+                    VALUES (?, ?, ?, ?, ?, ?)",
+        song.id,
+        song.name,
+        song.song_name,
+        song.song_id,
+        song.download_url,
+        song.level_id,
+    )
+    .execute(&mut *conn)
+    .await
 }
