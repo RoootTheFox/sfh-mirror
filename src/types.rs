@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_aux::prelude::deserialize_option_number_from_string;
+use std::str::FromStr;
 
 #[derive(sqlx::FromRow)]
 pub struct DBState {
@@ -21,8 +21,38 @@ pub struct Song {
     #[serde(default)]
     #[serde(
         rename(deserialize = "levelID"),
-        deserialize_with = "deserialize_option_number_from_string"
+        deserialize_with = "parse_and_fix_song_id"
     )]
-    pub level_id: Option<String>,
+    pub level_id: Option<i64>,
     pub state: String,
+}
+
+fn parse_and_fix_song_id<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de> + std::str::FromStr,
+    <T as FromStr>::Err: std::fmt::Display,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StrOrNull<T> {
+        String(String),
+        Number(T),
+        Null,
+    }
+
+    match StrOrNull::<T>::deserialize(deserializer)? {
+        StrOrNull::Number(n) => Ok(Some(n)),
+        StrOrNull::String(s) => match s.replace([' ', '-'], "").parse() {
+            Ok(n) => Ok(Some(n)),
+            Err(e) => {
+                println!(
+                    "warning: failed to parse song id '{}': {} - returning None",
+                    s, e
+                );
+                Ok(None)
+            }
+        },
+        StrOrNull::Null => Ok(None),
+    }
 }

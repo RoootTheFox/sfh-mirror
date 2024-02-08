@@ -35,7 +35,7 @@ The API will always support the last 2 API versions, unless there's a **very goo
   "song_name": "INZO - Overthinker",
   "song_id": "1252153",
   "download_url": "https://cdn-sfh.rooot.gay/654eba69eaa65fe484bdb0c1.mp3",
-  "level_id": "95106737",
+  "level_id": 95106737,
   "state": "rated"
 }
 ```
@@ -58,7 +58,7 @@ The API will always support the last 2 API versions, unless there's a **very goo
     "song_name": "EDEN - xo (Aaron Musslewhite Cover & Remake)",
     "song_id": "766165",
     "download_url": "https://cdn-sfh.rooot.gay/64f54c6ceba5efcdadf78c0a.mp3",
-    "level_id": "58825144",
+    "level_id": 58825144,
     "state": "rated"
   },
   {
@@ -67,7 +67,7 @@ The API will always support the last 2 API versions, unless there's a **very goo
     "song_name": "EDEN - xo (Aaron Musslewhite Cover & Remake) x blackbear - idfc",
     "song_id": "766165",
     "download_url": "https://cdn-sfh.rooot.gay/64f54c6ceba5efcdadf78c0b.mp3",
-    "level_id": "58825144",
+    "level_id": 58825144,
     "state": "mashup"
   }
 ]
