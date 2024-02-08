@@ -119,14 +119,15 @@ async fn insert_song_into_db(
     );
 
     sqlx::query!(
-        "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id)
-                    VALUES (?, ?, ?, ?, ?, ?)",
+        "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id, state)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
         song.id,
         song.name,
         song.song_name,
         song.song_id,
         url,
         song.level_id,
+        song.state,
     )
     .execute(&mut *conn)
     .await

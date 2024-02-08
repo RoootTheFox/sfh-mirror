@@ -24,4 +24,5 @@ pub struct Song {
         deserialize_with = "deserialize_option_number_from_string"
     )]
     pub level_id: Option<String>,
+    pub state: String,
 }
