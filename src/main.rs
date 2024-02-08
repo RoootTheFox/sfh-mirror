@@ -32,7 +32,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
         if !initial_sync_finished {
             println!("performing initial sync");
             match mirror::initial_sync(&db.0).await {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => return Err(rocket),
             }
         }
@@ -67,7 +67,15 @@ async fn main() -> anyhow::Result<()> {
     let _rocket = rocket::build()
         .attach(Db::init())
         .attach(AdHoc::try_on_ignite("DB Migrations", run_migrations))
-        .mount("/", routes![srv::version, api::get_song])
+        .mount(
+            "/",
+            routes![
+                srv::version,
+                api::get_song,
+                api::get_songs_for_level,
+                api::get_songs_with_id
+            ],
+        )
         .configure(figment)
         .launch()
         .await?;
