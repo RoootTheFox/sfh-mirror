@@ -1,3 +1,8 @@
+use rocket::http::{ContentType, Status};
+use rocket::response::Responder;
+use rocket::serde::json::serde_json;
+use rocket::{response, Request, Response};
+use serde::ser::SerializeMap;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -54,5 +59,45 @@ where
             }
         },
         StrOrNull::Null => Ok(None),
+    }
+}
+
+// Error types
+
+#[derive(Debug, thiserror::Error)]
+pub enum GenericError {
+    #[error("sqlx error")]
+    SqlxError(#[from] sqlx::Error),
+}
+
+impl Serialize for GenericError {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let GenericError::SqlxError(err) = self;
+
+        let mut map = serializer.serialize_map(Some(2))?;
+        map.serialize_entry("error", &err.to_string())?;
+        map.serialize_entry("status", &"error")?;
+        map.end()
+    }
+}
+
+impl<'r, 'o: 'r> Responder<'r, 'o> for GenericError {
+    fn respond_to(self, _req: &'r Request<'_>) -> response::Result<'o> {
+        match self {
+            GenericError::SqlxError(ref e) => {
+                let mut builder = Response::build();
+                let builder = builder
+                    .header(ContentType::JSON)
+                    .streamed_body(std::io::Cursor::new(serde_json::to_string(&self).unwrap()));
+
+                if let sqlx::Error::RowNotFound = e {
+                    builder.status(Status::NotFound);
+                } else {
+                    builder.status(Status::InternalServerError);
+                }
+
+                Ok(builder.finalize())
+            }
+        }
     }
 }
