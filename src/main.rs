@@ -20,7 +20,7 @@ struct Db(sqlx::SqlitePool);
 async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
     if let Some(db) = Db::fetch(&rocket) {
         match sqlx::migrate!().run(&db.0).await {
-            Ok(_) => println!("migrations ran successfully"),
+            Ok(_) => {}
             Err(e) => {
                 eprintln!("failed to run migrations: {:?}", e);
                 return Err(rocket);
@@ -28,7 +28,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
         }
 
         let initial_sync_finished = match mirror::check_initial_sync(&db.0).await {
-            Ok(a) => a,
+            Ok(finished) => finished,
             Err(e) => {
                 eprintln!("failed to check initial sync status: {:?}", e);
                 return Err(rocket);

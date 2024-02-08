@@ -27,15 +27,11 @@ pub(crate) async fn check_initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<bo
 pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
     let mut conn = pool.acquire().await?;
 
-    let reqwest = reqwest::Client::new();
-    let response = reqwest
-        .get("https://api.songfilehub.com/songs")
-        .send()
+    let response = reqwest::get("https://api.songfilehub.com/songs")
         .await?
         .json::<Vec<crate::types::Song>>()
         .await?;
 
-    // download 10 songs at a time
     let mut tasks = vec![];
 
     tokio::fs::create_dir_all("songs").await?;
