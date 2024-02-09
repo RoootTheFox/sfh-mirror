@@ -1,4 +1,4 @@
-![image](https://github.com/RoootTheFox/sfh-mirror/assets/78933889/e5f22c25-fa8b-41b8-937c-a9cc1dec19bd)## sfh-mirror API documentation
+## sfh-mirror API documentation
 
 ### all values are in JSON.
 
