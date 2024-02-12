@@ -4,7 +4,7 @@
 
 > [!note]
 > The public instance is running at https://sfh.rooot.gay. <br>
-> API docs can be found [here](api-docs.md).
+> API docs can be found [here](https://github.com/RoootTheFox/sfh-mirror/wiki/Api-Docs).
 
 ## Setup
 > [!caution]
