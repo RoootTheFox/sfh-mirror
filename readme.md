@@ -1,3 +1,6 @@
+> [!caution]
+> **DO NOT USE, VERY INEFFICIENT CODE**
+
 # sfh-mirror
 
 **A small API and file host for [Song File Hub](https://songfilehub.com), a website for Geometry Dash custom songs, intended to be used by mods like [Jukebox](https://github.com/Fleeym/jukebox)**
