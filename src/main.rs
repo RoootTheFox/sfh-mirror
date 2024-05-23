@@ -15,7 +15,7 @@ lazy_static! {
 
 #[derive(Database)]
 #[database("sqlx")]
-struct Db(sqlx::SqlitePool);
+struct Db(sqlx::MySqlPool);
 
 async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
     if let Some(db) = Db::fetch(&rocket) {
@@ -55,7 +55,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL")?;
-
+    dbg!(&db_url);
     let figment = Config::figment()
         .merge(("port", 58532))
         .merge(("address", Ipv4Addr::from([0, 0, 0, 0])))
@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
             rocket_db_pools::Config {
                 url: db_url,
                 min_connections: None,
-                max_connections: 1024,
+                max_connections: 8192,
                 connect_timeout: 3,
                 idle_timeout: None,
             },

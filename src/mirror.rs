@@ -1,30 +1,21 @@
-use crate::types::DBState;
 use futures::StreamExt;
 use rocket::tokio;
+use sqlx::mysql::MySqlQueryResult;
 use sqlx::pool::PoolConnection;
-use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{Error, Pool, Sqlite};
+use sqlx::{Error, MySql, Pool};
 
-pub(crate) async fn check_initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<bool> {
+pub(crate) async fn check_initial_sync(pool: &Pool<MySql>) -> anyhow::Result<bool> {
     let mut conn = pool.acquire().await?;
 
-    let initial_sync_finished = sqlx::query_as!(
-        DBState,
-        "SELECT key, value
-            FROM state
-            WHERE key = 'initial_sync_finished'",
-    )
-    .fetch_one(&mut *conn)
-    .await
-    .unwrap_or(DBState {
-        key: "initial_sync_finished".to_string(),
-        value: "false".to_string(),
-    });
+    let initial_sync_finished =
+        sqlx::query!("SELECT `key`, `value` FROM `state` WHERE  `key`='initial_sync_finished'",)
+            .fetch_one(&mut *conn)
+            .await?;
 
-    Ok(initial_sync_finished.value == "true")
+    Ok(initial_sync_finished.value.unwrap() == "true")
 }
 
-pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
+pub(crate) async fn initial_sync(pool: &Pool<MySql>) -> anyhow::Result<()> {
     let mut conn = pool.acquire().await?;
 
     let response = reqwest::get("https://api.songfilehub.com/songs")
@@ -95,7 +86,7 @@ pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
         }
     }
 
-    sqlx::query!("REPLACE INTO state (key, value) VALUES ('initial_sync_finished', 'true')")
+    sqlx::query!("UPDATE `sfh`.`state` SET `value`='true' WHERE  `key`='initial_sync_finished'")
         .execute(&mut *conn)
         .await?;
 
@@ -105,26 +96,45 @@ pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
 }
 
 async fn insert_song_into_db(
-    mut conn: PoolConnection<Sqlite>,
+    mut conn: PoolConnection<MySql>,
     song: crate::types::Song,
-) -> Result<SqliteQueryResult, Error> {
+) -> Result<MySqlQueryResult, Error> {
     let url = format!(
         "{}/{}.mp3",
         <String as AsRef<str>>::as_ref(&crate::PUBLIC_URL_PREFIX),
         song.id
     );
 
-    sqlx::query!(
-        "REPLACE INTO songs (id, name, song_name, song_id, download_url, level_id, state)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)",
-        song.id,
-        song.name,
-        song.song_name,
-        song.song_id,
-        url,
-        song.level_id,
-        song.state,
+    if sqlx::query_as!(
+        crate::types::Song,
+        "SELECT *
+            FROM songs
+            WHERE id = ?",
+        song.id
     )
-    .execute(&mut *conn)
+    .fetch_one(&mut *conn)
     .await
+    .is_err()
+    {
+        sqlx::query!(
+            "INSERT INTO songs  (id, name, song_name, song_id, download_url, level_id, state)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
+            song.id,
+            song.name,
+            song.song_name,
+            song.song_id,
+            url,
+            song.level_id,
+            song.state,
+        )
+        .execute(&mut *conn)
+        .await
+    } else {
+        sqlx::query(
+            "SELECT *
+            FROM songs",
+        )
+        .execute(&mut *conn)
+        .await
+    }
 }
