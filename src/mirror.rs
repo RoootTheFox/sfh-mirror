@@ -12,6 +12,9 @@ pub(crate) async fn sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
         .json::<Vec<crate::types::Song>>()
         .await?;
 
+    // clone for later use
+    let remote_songs = response.clone();
+
     let mut tasks = vec![];
 
     tokio::fs::create_dir_all("songs").await?;
@@ -78,6 +81,33 @@ pub(crate) async fn sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
     sqlx::query!("REPLACE INTO state (key, value) VALUES ('initial_sync_finished', 'true')")
         .execute(&mut *conn)
         .await?;
+
+    // after we downloaded all songs, check if we have any that upstream doesn't have
+    let local_songs = sqlx::query_as!(crate::types::Song, "SELECT * FROM songs")
+        .fetch_all(&mut *conn)
+        .await?;
+
+    tokio::fs::create_dir_all("deleted").await?;
+    for local_song in local_songs {
+        if !remote_songs.iter().any(|s| s.id == local_song.id) {
+            println!("deleting song: {}", local_song.id);
+
+            // move file to deleted folder
+            tokio::fs::rename(
+                format!("songs/{}.mp3", local_song.id),
+                format!("deleted/{}.mp3", local_song.id),
+            )
+            .await?;
+            // move into deleted table
+            sqlx::query!("REPLACE INTO deleted_songs (id, name, song_name, song_id, download_url, level_id, state) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                local_song.id, local_song.name, local_song.song_name, local_song.song_id, local_song.download_url, local_song.level_id, local_song.state)
+                .execute(&mut *conn)
+                .await?;
+            sqlx::query!("DELETE FROM songs WHERE id = ?", local_song.id)
+                .execute(&mut *conn)
+                .await?;
+        }
+    }
 
     println!("sync completed!");
 

@@ -12,7 +12,7 @@ pub struct DBState {
     pub value: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
 pub struct Song {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
