@@ -5,9 +5,10 @@ mod types;
 
 use lazy_static::lazy_static;
 use rocket::fairing::AdHoc;
-use rocket::{routes, Build, Config, Rocket};
+use rocket::{routes, tokio, Build, Config, Rocket};
 use rocket_db_pools::Database;
 use std::net::Ipv4Addr;
+use std::time::Duration;
 
 lazy_static! {
     pub static ref PUBLIC_URL_PREFIX: String = dotenvy::var("PUBLIC_URL_PREFIX").unwrap();
@@ -35,6 +36,27 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
                 return Err(rocket);
             }
         }
+
+        // start syncing periodically :3 :3 :3 :3 :3 help the :3 is taking over :3 :3 :3c
+        // >:3c
+        // waaaa
+
+        let db_ref = db.0.clone();
+
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(240));
+
+            loop {
+                interval.tick().await;
+                println!("periodic sync starting wee");
+                match mirror::sync(&db_ref).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!("failed to perform sync: {:?}", e);
+                    }
+                }
+            }
+        });
 
         Ok(rocket)
     } else {
