@@ -50,11 +50,11 @@ where
         StrOrNull::Number(n) => Ok(Some(n)),
         StrOrNull::String(s) => match s.replace([' ', '-'], "").parse() {
             Ok(n) => Ok(Some(n)),
-            Err(e) => {
-                println!(
+            Err(_e) => {
+                /*println!(
                     "warning: failed to parse song id '{}': {} - returning None",
                     s, e
-                );
+                );*/
                 Ok(None)
             }
         },
