@@ -1,30 +1,10 @@
-use crate::types::DBState;
 use futures::StreamExt;
 use rocket::tokio;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{Error, Pool, Sqlite};
 
-pub(crate) async fn check_initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<bool> {
-    let mut conn = pool.acquire().await?;
-
-    let initial_sync_finished = sqlx::query_as!(
-        DBState,
-        "SELECT key, value
-            FROM state
-            WHERE key = 'initial_sync_finished'",
-    )
-    .fetch_one(&mut *conn)
-    .await
-    .unwrap_or(DBState {
-        key: "initial_sync_finished".to_string(),
-        value: "false".to_string(),
-    });
-
-    Ok(initial_sync_finished.value == "true")
-}
-
-pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
+pub(crate) async fn sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
     let mut conn = pool.acquire().await?;
 
     let response = reqwest::get("https://api.songfilehub.com/songs")
@@ -99,7 +79,7 @@ pub(crate) async fn initial_sync(pool: &Pool<Sqlite>) -> anyhow::Result<()> {
         .execute(&mut *conn)
         .await?;
 
-    println!("initial sync completed!");
+    println!("sync completed!");
 
     Ok(())
 }
