@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
             rocket_db_pools::Config {
                 url: db_url,
                 min_connections: None,
-                max_connections: 8192,
+                max_connections: 150,
                 connect_timeout: 3,
                 idle_timeout: None,
             },
