@@ -16,7 +16,7 @@
 ### Public Instances
 Url | Maintainer | Location
 ------------- | ------------- | -------------
-https://sfh.waow.cat | Load balances/fails over [@RoootTheFox]'s and [@PassiHD2004]'s Instances | Germany
+https://sfh.waow.cat | Load balances/fails over [@RoootTheFox] 's and [@PassiHD2004] 's Instances | Germany
 https://sfh.rooot.gay | Instance run by [@RoootTheFox](https://github.com/RoootTheFox) | Germany
 https://sfh.pingusmc.org | Instance run by [@PassiHD2004](https://github.com/PassiHD2004) | Germany
 
