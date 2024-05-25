@@ -55,7 +55,8 @@ async fn run_migrations(rocket: Rocket<Build>) -> rocket::fairing::Result {
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL")?;
-    dbg!(&db_url);
+    let max_conns = dotenvy::var("MAX_CONNS_MYSQL").unwrap_or("150".to_string());
+
     let figment = Config::figment()
         .merge(("port", 58532))
         .merge(("address", Ipv4Addr::from([0, 0, 0, 0])))
@@ -64,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
             rocket_db_pools::Config {
                 url: db_url,
                 min_connections: None,
-                max_connections: 150,
+                max_connections: max_conns.parse::<usize>()?,
                 connect_timeout: 3,
                 idle_timeout: None,
             },

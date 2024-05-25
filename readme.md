@@ -1,6 +1,10 @@
 > [!caution]
-> **DO NOT USE, VERY INEFFICIENT CODE** <br>
-> Needs multiple workarounds in mysql and linux to work at all, so just **don't** use it. Belive me ~ Blexyel
+> Due to the way mysql works, the initial sync will take a bit <br>
+> since MySql's connection limit is ~150 connections and that is what <br>
+> this program is limited to¹!
+
+> [!note]
+> ¹ Pass `MAX_CONNS_MYSQL=100` to change the maximum connection limit
 
 # sfh-mirror
 
