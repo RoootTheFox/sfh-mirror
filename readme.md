@@ -15,8 +15,9 @@
 ### Public Instances
 Url | Maintainer | Location
 ------------- | ------------- | -------------
-https://sfh.rooot.gay | Instance run by [@RoootTheFox](https://github.com/RoootTheFox) | Germany
-https://sfh.pingusmc.org | Instance run by [@PassiHD2004](https://github.com/PassiHD2004) | Germany
+https://sfh.waow.cat | Load balances/fails over [@RoootTheFox](https://github.com/RoootTheFox)'s and [@PassiHD2004](https://github.com/PassiHD2004)'s Instances | Earth
+https://sfh.rooot.gay | Instance run by [@RoootTheFox](https://github.com/RoootTheFox) | Earth
+https://sfh.pingusmc.org | Instance run by [@PassiHD2004](https://github.com/PassiHD2004) | Earth
 
 ## [Setup](https://github.com/RoootTheFox/sfh-mirror/wiki/Setup-&-Installation)
 ## [Hosting Setup](https://github.com/RoootTheFox/sfh-mirror/wiki/Examples-nginx,-apache)
