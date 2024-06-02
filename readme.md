@@ -13,11 +13,11 @@
 > You can check the Status of these Instances [here](https://status.pingusmc.org)! 
 
 ### Public Instances
-Url | Maintainer | Location
-------------- | ------------- | -------------
-https://sfh.waow.cat | Load balances/fails over [@RoootTheFox](https://github.com/RoootTheFox)'s and [@PassiHD2004](https://github.com/PassiHD2004)'s Instances | Earth
-https://sfh.rooot.gay | Instance run by [@RoootTheFox](https://github.com/RoootTheFox) | Earth
-https://sfh.pingusmc.org | Instance run by [@PassiHD2004](https://github.com/PassiHD2004) | Earth
+Url | Maintainer | Location | Status
+------------- | ------------- | ------------- | -------------
+https://sfh.waow.cat | Load balances/fails over [@RoootTheFox](https://github.com/RoootTheFox)'s and [@PassiHD2004](https://github.com/PassiHD2004)'s Instances | Earth | <img src="https://status.pingusmc.org/api/badge/36/status" />
+https://sfh.rooot.gay | Instance run by [@RoootTheFox](https://github.com/RoootTheFox) | Earth | <img src="https://status.pingusmc.org/api/badge/31/status" />
+https://sfh.pingusmc.org | Instance run by [@PassiHD2004](https://github.com/PassiHD2004) | Earth | <img src="https://status.pingusmc.org/api/badge/30/status" />
 
 ## [Setup](https://github.com/RoootTheFox/sfh-mirror/wiki/Setup-&-Installation)
 ## [Hosting Setup](https://github.com/RoootTheFox/sfh-mirror/wiki/Examples-nginx,-apache)
