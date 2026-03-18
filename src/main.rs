@@ -79,6 +79,7 @@ async fn main() -> anyhow::Result<()> {
                 max_connections: 1024,
                 connect_timeout: 3,
                 idle_timeout: None,
+                ..Default::default()
             },
         ));
 
